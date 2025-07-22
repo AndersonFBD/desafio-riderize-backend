@@ -1,0 +1,48 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+//tabela de usuários
+model User {
+  id        String      @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  inscricoes inscricao[]
+}
+
+//tabela de pedais
+model Pedal{
+  id        String      @id @default(uuid())
+  name      String
+  start_date     DateTime
+  start_date_registration DateTime
+  end_date_registration   DateTime
+  additional_information String?
+  start_place String
+  participants_limit Int?
+
+  subscriptions inscricao[]
+}
+
+//tabela de inscrições de usuários em pedais
+model inscricao {
+  id        String      @id @default(uuid())
+  user_id   String
+  pedal_id  String
+  created_at DateTime @default(now())
+  user      User     @relation(fields: [user_id], references: [id])
+  pedal     Pedal    @relation(fields: [pedal_id], references: [id])
+}
