@@ -6,7 +6,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -15,16 +14,17 @@ datasource db {
 }
 
 //tabela de usuários
-model User {
+model user {
   id        String      @id @default(uuid())
   name      String
   email     String   @unique
   password  String
   inscricoes inscricao[]
+  pedal pedal[]
 }
 
 //tabela de pedais
-model Pedal{
+model pedal{
   id        String      @id @default(uuid())
   name      String
   start_date     DateTime
@@ -33,6 +33,9 @@ model Pedal{
   additional_information String?
   start_place String
   participants_limit Int?
+  
+  creator_id String
+  creator user @relation(fields: [creator_id], references: [id])
 
   subscriptions inscricao[]
 }
@@ -43,6 +46,6 @@ model inscricao {
   user_id   String
   pedal_id  String
   created_at DateTime @default(now())
-  user      User     @relation(fields: [user_id], references: [id])
-  pedal     Pedal    @relation(fields: [pedal_id], references: [id])
+  user      user     @relation(fields: [user_id], references: [id])
+  pedal     pedal    @relation(fields: [pedal_id], references: [id])
 }
