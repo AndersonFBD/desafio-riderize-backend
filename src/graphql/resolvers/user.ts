@@ -1,7 +1,8 @@
 import { user as userPrismaSchema } from "@prisma/client";
-import { GraphQLContext } from "../context";
+import { GraphQLContext, prisma } from "../context";
 import bcrypt from "bcrypt";
 import { IResolvers } from "@graphql-tools/utils";
+import { tokenGeneration } from "../../middlewares/jwtMiddleware";
 
 interface CreateUserInput {
   name: string;
@@ -37,6 +38,26 @@ export const userResolvers: IResolvers<GraphQLContext> = {
           password: hashedPassword,
         },
       });
+    },
+    login: async (
+      _parent: unknown,
+      _args: { email: string; password: string }
+    ) => {
+      const { email, password } = _args;
+
+      const user = await prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (!user) throw new Error("Usuário não encontrado");
+      if (!(await bcrypt.compare(password, user.password)))
+        throw new Error("senha incorreta");
+
+      const token = tokenGeneration(user);
+      return {
+        token,
+        user,
+      };
     },
   },
 };

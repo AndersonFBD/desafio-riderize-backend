@@ -9,6 +9,11 @@ export const userTypeDefs = gql`
     pedals: [Pedal!]!
   }
 
+  type AuthPayload {
+    token: String!
+    user: User!
+  }
+
   input CreateUserInput {
     name: String!
     email: String!
@@ -20,5 +25,7 @@ export const userTypeDefs = gql`
 
   type Mutation {
     createUser(data: CreateUserInput!): User!
+    login(email: String!, password: String!): AuthPayload!
+    logout: Boolean!
   }
 `;
