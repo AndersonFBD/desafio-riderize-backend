@@ -1,8 +1,13 @@
 import jwt, { SignOptions } from "jsonwebtoken";
 import { user } from "@prisma/client";
 
+export interface tokenPayload {
+  id: string;
+  email: string;
+}
+
 interface jwtProperties {
-  payload: object;
+  payload: tokenPayload;
   secret: string;
   options: SignOptions;
 }
@@ -27,5 +32,8 @@ export function tokenGeneration(user: user): string {
 export function tokenReading(token: string) {
   const secret = process.env.SECRET;
   if (!secret) throw new Error("Variáveis de ambiente não encontradas");
-  return jwt.verify(token, secret);
+  const decoded = jwt.verify(token, secret);
+  if (typeof decoded !== "object" || !("id" in decoded))
+    throw new Error("Token irregular");
+  return decoded as tokenPayload;
 }
