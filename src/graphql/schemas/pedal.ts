@@ -1,7 +1,7 @@
 import { gql } from "graphql-tag";
 
 export const pedalTypeDefs = gql`
-  type pedal {
+  type Pedal {
     id: ID!
     name: String!
     start_date: String!
@@ -10,8 +10,8 @@ export const pedalTypeDefs = gql`
     additional_information: String
     start_place: String!
     participants_limit: Int
-    creator_id: user!
-    subscriptions: [inscricao!]!
+    creator_id: User!
+    subscriptions: [Inscricao!]!
   }
 
   input CreatePedalInput {
@@ -27,12 +27,13 @@ export const pedalTypeDefs = gql`
   type Query {
     availablePedals: [Pedal!]!
     PedalById(id: ID!): Pedal
-    userPedals: [Pedal!]!
+    getCreatedPedals: [Pedal!]!
+    getSubscribedPedals: [Pedal!]!
   }
 
   type Mutation {
     createPedal(data: CreatePedalInput!): Pedal!
-    subscribeUserOnPedal(pedalId: String!): inscricao!
+    subscribeUserOnPedal(pedalId: String!): Inscricao!
   }
 `;
 

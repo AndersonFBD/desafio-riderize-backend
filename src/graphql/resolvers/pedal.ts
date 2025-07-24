@@ -1,18 +1,19 @@
-import { GraphQLContext } from "../context";
+import { GraphQLContext as Context } from "../context";
 import { pedal, inscricao } from "@prisma/client";
 import { createPedalInput } from "../schemas/pedal";
+import { IResolvers } from "@graphql-tools/utils";
 
 interface SubscribeUseronPedalArgs {
   pedalId: string;
 }
 
-export const pedalResolvers = {
+export const pedalResolvers: IResolvers<Context> = {
   Query: {
     // quais pedais estão disponíveis?
     availablePedals: async (
       _parent: unknown,
       _args: unknown,
-      context: GraphQLContext
+      context: Context
     ): Promise<pedal[]> => {
       const now = new Date();
       return context.prisma.pedal.findMany({
@@ -21,6 +22,10 @@ export const pedalResolvers = {
             gte: now,
           },
         },
+        include: {
+          creator: true, // incluir o criador do pedal
+          subscriptions: true, // incluir inscrições
+        },
       });
     },
 
@@ -28,7 +33,7 @@ export const pedalResolvers = {
     getCreatedPedals: async (
       _parent: unknown,
       _args: unknown,
-      context: GraphQLContext
+      context: Context
     ): Promise<pedal[]> => {
       if (!context.userId) {
         throw new Error("faça login para ver os pedais criados");
@@ -37,6 +42,9 @@ export const pedalResolvers = {
         where: {
           creator_id: context.userId,
         },
+        include: {
+          subscriptions: true,
+        },
       });
     },
 
@@ -44,7 +52,7 @@ export const pedalResolvers = {
     getSubscribedPedals: async (
       _parent: unknown,
       _args: unknown,
-      context: GraphQLContext
+      context: Context
     ): Promise<pedal[]> => {
       if (!context.userId) {
         throw new Error("faça login para ver os pedais");
@@ -66,7 +74,7 @@ export const pedalResolvers = {
     subscribeUserOnPedal: async (
       _parent: unknown,
       args: SubscribeUseronPedalArgs,
-      context: GraphQLContext
+      context: Context
     ): Promise<inscricao> => {
       const { pedalId } = args;
       const pedal = await context.prisma.pedal.findUnique({
@@ -74,6 +82,16 @@ export const pedalResolvers = {
       });
       if (!pedal) {
         throw new Error("Pedal não encontrado");
+      }
+      const countSubscriptions = await context.prisma.inscricao.count({
+        where: { pedal_id: pedalId },
+      });
+      // verificar se o limite de participantes foi atingido
+      if (
+        pedal.participants_limit &&
+        countSubscriptions >= pedal.participants_limit
+      ) {
+        throw new Error("Limite de participantes atingido");
       }
       if (new Date() > pedal.end_date_registration) {
         throw new Error("Período de inscrição encerrado");
@@ -83,6 +101,10 @@ export const pedalResolvers = {
           pedal_id: pedalId,
           user_id: context.userId!,
         },
+        include: {
+          pedal: true, // incluir os detalhes do pedal
+          user: true, // incluir os detalhes do usuário
+        },
       });
       return subscription;
     },
@@ -90,7 +112,7 @@ export const pedalResolvers = {
     createPedal: async (
       _parent: unknown,
       args: { data: createPedalInput },
-      context: GraphQLContext
+      context: Context
     ): Promise<pedal> => {
       if (!context.userId) {
         throw new Error("faça login para criar um pedal");

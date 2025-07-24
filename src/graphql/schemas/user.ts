@@ -5,7 +5,8 @@ export const userTypeDefs = gql`
     id: ID!
     name: String!
     email: String!
-    pedal: [pedal!]!
+    inscricoes: [Inscricao!]!
+    pedals: [Pedal!]!
   }
 
   input CreateUserInput {
@@ -13,7 +14,7 @@ export const userTypeDefs = gql`
     email: String!
     password: String!
   }
-  type query {
+  type Query {
     users: [User!]!
   }
 
