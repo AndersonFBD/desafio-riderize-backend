@@ -2,6 +2,7 @@ import { ApolloServer } from "@apollo/server";
 import { startStandaloneServer } from "@apollo/server/standalone";
 import { typeDefs, resolvers } from "./graphql";
 import { prisma, GraphQLContext as Context } from "./graphql/context";
+import "dotenv/config";
 
 const server = new ApolloServer<Context>({
   typeDefs,
