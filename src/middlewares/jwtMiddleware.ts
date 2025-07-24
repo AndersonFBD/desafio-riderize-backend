@@ -23,3 +23,9 @@ export function tokenGeneration(user: user): string {
 
   return jwt.sign(tokenprops.payload, tokenprops.secret, tokenprops.options);
 }
+
+export function tokenReading(token: string) {
+  const secret = process.env.SECRET;
+  if (!secret) throw new Error("Variáveis de ambiente não encontradas");
+  return jwt.verify(token, secret);
+}
