@@ -87,6 +87,20 @@ export const pedalResolvers: IResolvers<Context> = {
       if (!pedal) {
         throw new Error("Pedal não encontrado");
       }
+
+      // o usuário já está inscrito no pedal?
+      const jaInscrito = await context.prisma.inscricao.findFirst({
+        where: {
+          pedal_id: pedalId,
+          user_id: usuario,
+        },
+      });
+
+      if (jaInscrito) {
+        throw new Error("Você já está inscrito neste pedal");
+      }
+
+      // numero de inscritos no pedal
       const countSubscriptions = await context.prisma.inscricao.count({
         where: { pedal_id: pedalId },
       });
