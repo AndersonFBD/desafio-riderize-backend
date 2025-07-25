@@ -2,6 +2,7 @@ import { GraphQLContext as Context } from "../context";
 import { pedal, inscricao } from "@prisma/client";
 import { createPedalInput } from "../schemas/pedal";
 import { IResolvers } from "@graphql-tools/utils";
+import validarCreatePedal from "../../utils/pedalValidation";
 
 interface SubscribeUseronPedalArgs {
   pedalId: string;
@@ -35,12 +36,12 @@ export const pedalResolvers: IResolvers<Context> = {
       _args: unknown,
       context: Context
     ): Promise<pedal[]> => {
-      if (!context.userId) {
+      if (!context.user) {
         throw new Error("faça login para ver os pedais criados");
       }
       return context.prisma.pedal.findMany({
         where: {
-          creator_id: context.userId,
+          creator_id: context.user.id,
         },
         include: {
           subscriptions: true,
@@ -54,13 +55,13 @@ export const pedalResolvers: IResolvers<Context> = {
       _args: unknown,
       context: Context
     ): Promise<pedal[]> => {
-      if (!context.userId) {
+      if (!context.user) {
         throw new Error("faça login para ver os pedais");
       }
 
       const pedalList = await context.prisma.inscricao.findMany({
         where: {
-          user_id: context.userId,
+          user_id: context.user.id,
         },
         include: {
           pedal: true, // incluir os detalhes do pedal
@@ -76,6 +77,9 @@ export const pedalResolvers: IResolvers<Context> = {
       args: SubscribeUseronPedalArgs,
       context: Context
     ): Promise<inscricao> => {
+      if (!context.user)
+        throw new Error("Faça Login para se inscrever no pedal");
+      const usuario = context.user.id;
       const { pedalId } = args;
       const pedal = await context.prisma.pedal.findUnique({
         where: { id: pedalId },
@@ -83,6 +87,20 @@ export const pedalResolvers: IResolvers<Context> = {
       if (!pedal) {
         throw new Error("Pedal não encontrado");
       }
+
+      // o usuário já está inscrito no pedal?
+      const jaInscrito = await context.prisma.inscricao.findFirst({
+        where: {
+          pedal_id: pedalId,
+          user_id: usuario,
+        },
+      });
+
+      if (jaInscrito) {
+        throw new Error("Você já está inscrito neste pedal");
+      }
+
+      // numero de inscritos no pedal
       const countSubscriptions = await context.prisma.inscricao.count({
         where: { pedal_id: pedalId },
       });
@@ -99,7 +117,7 @@ export const pedalResolvers: IResolvers<Context> = {
       const subscription = await context.prisma.inscricao.create({
         data: {
           pedal_id: pedalId,
-          user_id: context.userId!,
+          user_id: usuario!,
         },
         include: {
           pedal: true, // incluir os detalhes do pedal
@@ -114,31 +132,16 @@ export const pedalResolvers: IResolvers<Context> = {
       args: { data: createPedalInput },
       context: Context
     ): Promise<pedal> => {
-      if (!context.userId) {
+      if (!context.user) {
         throw new Error("faça login para criar um pedal");
       }
-
-      const startDate = new Date(args.data.start_date);
-      const startDateRegistration = new Date(args.data.start_date_registration);
-      const endDateRegistration = new Date(args.data.end_date_registration);
-      // validações de datas
-      if (endDateRegistration <= startDateRegistration) {
-        throw new Error(
-          "A data de encerramento da inscrição deve ser posterior à data de início do pedal"
-        );
-      }
-      if (startDateRegistration <= new Date()) {
-        throw new Error("A data de início da inscrição deve ser futura");
-      }
-      if (startDate <= new Date()) {
-        throw new Error("A data de início do pedal deve ser futura");
-      }
-      // validação de limite de participantes
-      if (args.data.participants_limit && args.data.participants_limit <= 0) {
-        throw new Error(
-          "O limite de participantes deve ser um número positivo"
-        );
-      }
+      const usuario = context.user.id;
+      validarCreatePedal({
+        start_date: String(args.data.start_date),
+        start_date_registration: String(args.data.start_date_registration),
+        end_date_registration: String(args.data.end_date_registration),
+        participants_limit: Number(args.data.participants_limit),
+      });
       // criar o pedal
       const newPedal = await context.prisma.pedal.create({
         data: {
@@ -149,7 +152,7 @@ export const pedalResolvers: IResolvers<Context> = {
           additional_information: args.data.additional_information,
           start_place: args.data.start_place,
           participants_limit: args.data.participants_limit,
-          creator: { connect: { id: context.userId } },
+          creator: { connect: { id: usuario } },
         },
       });
       return newPedal;
