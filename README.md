@@ -60,3 +60,7 @@ Há um arquivo .env.exemplo que pode ser usado para criar o seu .env
 ```
 
 O playground do apollo server estará disponível em localhost:4000
+
+A API também pode ser acessada em:
+
+https://desafio-riderize-anderson.up.railway.app/
