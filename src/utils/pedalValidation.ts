@@ -6,10 +6,16 @@ interface pedalData {
 }
 
 export default function validarCreatePedal(data: pedalData) {
+  if (
+    !validarData(data.start_date_registration) ||
+    !validarData(data.end_date_registration) ||
+    !validarData(data.start_date)
+  )
+    throw new Error("datas precisam ser válidas e no formato YYYY-MM-DD");
+
   const startDate = new Date(data.start_date);
   const startDateRegistration = new Date(data.start_date_registration);
   const endDateRegistration = new Date(data.end_date_registration);
-
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   startDate.setHours(0, 0, 0, 0);
@@ -35,7 +41,15 @@ export default function validarCreatePedal(data: pedalData) {
     );
   }
   // validação de limite de participantes
-  if (data.participants_limit !== null && data.participants_limit <= 0) {
+  if (data.participants_limit != null && data.participants_limit <= 0) {
     throw new Error("O limite de participantes deve ser um número positivo");
   }
+}
+
+function validarData(dateStr: string): boolean {
+  const regex = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+  if (!regex.test(dateStr)) return false;
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return false;
+  return date.toISOString().slice(0, 10) === dateStr;
 }
