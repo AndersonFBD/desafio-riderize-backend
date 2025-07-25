@@ -27,7 +27,7 @@ O objetivo foi produzir uma API GraphQL que possa:
 
 Ao realizar o login, adicione o token retornado no header Authorization da requisição GraphQL
 
-Authorization: Bearer <token>
+Authorization: seu_token
 
 ## Instruções
 
