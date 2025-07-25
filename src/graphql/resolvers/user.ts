@@ -3,6 +3,7 @@ import { GraphQLContext, prisma } from "../context";
 import bcrypt from "bcrypt";
 import { IResolvers } from "@graphql-tools/utils";
 import { tokenGeneration } from "../../middlewares/jwtMiddleware";
+import { validarEmail } from "../../utils/userValidation";
 
 interface CreateUserInput {
   name: string;
@@ -29,6 +30,22 @@ export const userResolvers: IResolvers<GraphQLContext> = {
     ): Promise<userPrismaSchema> => {
       const { name, email, password } = _args.data;
 
+      // normaliza o email
+      email.trim().toLowerCase();
+
+      // verificar se o formato do email está correto
+      if (!validarEmail(email))
+        throw new Error("O formato de email é inválido");
+
+      // verifica se não existe um usuario com o email fornecido
+      const emailExistente = await context.prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (emailExistente)
+        throw new Error("Um usuário já está utilizando este email");
+
+      // criptografa a senha
       let hashedPassword = await bcrypt.hash(password, 10);
 
       return context.prisma.user.create({
