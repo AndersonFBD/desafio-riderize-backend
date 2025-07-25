@@ -45,7 +45,7 @@ model inscricao {
   id        String      @id @default(uuid())
   user_id   String
   pedal_id  String
-  created_at DateTime @default(now())
+  subscription_date DateTime @default(now())
   user      user     @relation(fields: [user_id], references: [id])
   pedal     pedal    @relation(fields: [pedal_id], references: [id])
 }
