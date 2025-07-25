@@ -76,6 +76,9 @@ export const pedalResolvers: IResolvers<Context> = {
       args: SubscribeUseronPedalArgs,
       context: Context
     ): Promise<inscricao> => {
+      if (!context.user)
+        throw new Error("Faça Login para se inscrever no pedal");
+      const usuario = context.user.id;
       const { pedalId } = args;
       const pedal = await context.prisma.pedal.findUnique({
         where: { id: pedalId },
@@ -99,7 +102,7 @@ export const pedalResolvers: IResolvers<Context> = {
       const subscription = await context.prisma.inscricao.create({
         data: {
           pedal_id: pedalId,
-          user_id: context.user?.id!,
+          user_id: usuario!,
         },
         include: {
           pedal: true, // incluir os detalhes do pedal
@@ -117,7 +120,7 @@ export const pedalResolvers: IResolvers<Context> = {
       if (!context.user) {
         throw new Error("faça login para criar um pedal");
       }
-
+      const usuario = context.user.id;
       const startDate = new Date(args.data.start_date);
       const startDateRegistration = new Date(args.data.start_date_registration);
       const endDateRegistration = new Date(args.data.end_date_registration);
@@ -149,7 +152,7 @@ export const pedalResolvers: IResolvers<Context> = {
           additional_information: args.data.additional_information,
           start_place: args.data.start_place,
           participants_limit: args.data.participants_limit,
-          creator: { connect: { id: context.user.id } },
+          creator: { connect: { id: usuario } },
         },
       });
       return newPedal;
