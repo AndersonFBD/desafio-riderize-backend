@@ -35,12 +35,12 @@ export const pedalResolvers: IResolvers<Context> = {
       _args: unknown,
       context: Context
     ): Promise<pedal[]> => {
-      if (!context.userId) {
+      if (!context.user) {
         throw new Error("faça login para ver os pedais criados");
       }
       return context.prisma.pedal.findMany({
         where: {
-          creator_id: context.userId,
+          creator_id: context.user.id,
         },
         include: {
           subscriptions: true,
@@ -54,13 +54,13 @@ export const pedalResolvers: IResolvers<Context> = {
       _args: unknown,
       context: Context
     ): Promise<pedal[]> => {
-      if (!context.userId) {
+      if (!context.user) {
         throw new Error("faça login para ver os pedais");
       }
 
       const pedalList = await context.prisma.inscricao.findMany({
         where: {
-          user_id: context.userId,
+          user_id: context.user.id,
         },
         include: {
           pedal: true, // incluir os detalhes do pedal
@@ -99,7 +99,7 @@ export const pedalResolvers: IResolvers<Context> = {
       const subscription = await context.prisma.inscricao.create({
         data: {
           pedal_id: pedalId,
-          user_id: context.userId!,
+          user_id: context.user?.id!,
         },
         include: {
           pedal: true, // incluir os detalhes do pedal
@@ -114,7 +114,7 @@ export const pedalResolvers: IResolvers<Context> = {
       args: { data: createPedalInput },
       context: Context
     ): Promise<pedal> => {
-      if (!context.userId) {
+      if (!context.user) {
         throw new Error("faça login para criar um pedal");
       }
 
@@ -149,7 +149,7 @@ export const pedalResolvers: IResolvers<Context> = {
           additional_information: args.data.additional_information,
           start_place: args.data.start_place,
           participants_limit: args.data.participants_limit,
-          creator: { connect: { id: context.userId } },
+          creator: { connect: { id: context.user.id } },
         },
       });
       return newPedal;
