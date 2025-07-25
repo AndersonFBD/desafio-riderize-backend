@@ -2,6 +2,7 @@ import { GraphQLContext as Context } from "../context";
 import { pedal, inscricao } from "@prisma/client";
 import { createPedalInput } from "../schemas/pedal";
 import { IResolvers } from "@graphql-tools/utils";
+import validarCreatePedal from "../../utils/pedalValidation";
 
 interface SubscribeUseronPedalArgs {
   pedalId: string;
@@ -121,27 +122,12 @@ export const pedalResolvers: IResolvers<Context> = {
         throw new Error("faça login para criar um pedal");
       }
       const usuario = context.user.id;
-      const startDate = new Date(args.data.start_date);
-      const startDateRegistration = new Date(args.data.start_date_registration);
-      const endDateRegistration = new Date(args.data.end_date_registration);
-      // validações de datas
-      if (endDateRegistration <= startDateRegistration) {
-        throw new Error(
-          "A data de encerramento da inscrição deve ser posterior à data de início do pedal"
-        );
-      }
-      if (startDateRegistration <= new Date()) {
-        throw new Error("A data de início da inscrição deve ser futura");
-      }
-      if (startDate <= new Date()) {
-        throw new Error("A data de início do pedal deve ser futura");
-      }
-      // validação de limite de participantes
-      if (args.data.participants_limit && args.data.participants_limit <= 0) {
-        throw new Error(
-          "O limite de participantes deve ser um número positivo"
-        );
-      }
+      validarCreatePedal({
+        start_date: String(args.data.start_date),
+        start_date_registration: String(args.data.start_date_registration),
+        end_date_registration: String(args.data.end_date_registration),
+        participants_limit: Number(args.data.participants_limit),
+      });
       // criar o pedal
       const newPedal = await context.prisma.pedal.create({
         data: {
