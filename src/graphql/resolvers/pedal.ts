@@ -49,7 +49,7 @@ export const pedalResolvers: IResolvers<Context> = {
       });
     },
 
-    // quais pedais o usuário está participou/inscreveu-se?
+    // quais pedais o usuário já participou/inscreveu-se?
     getSubscribedPedals: async (
       _parent: unknown,
       _args: unknown,
